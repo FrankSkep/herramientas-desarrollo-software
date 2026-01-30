@@ -1,0 +1,106 @@
+@page "/calculadora"
+@rendermode InteractiveServer
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Calculadora Básica</h5>
+                </div>
+
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">Número 1</label>
+                        <InputNumber class="form-control" @bind-Value="Num1" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Número 2</label>
+                        <InputNumber class="form-control" @bind-Value="Num2" />
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-between">
+                        <button class="btn btn-success" @onclick="Sumar">Sumar</button>
+                        <button class="btn btn-warning" @onclick="Restar">Restar</button>
+                        <button class="btn btn-info text-white" @onclick="Multiplicar">Multiplicar</button>
+                        <button class="btn btn-danger" @onclick="Dividir">Dividir</button>
+                        <button class="btn btn-secondary" @onclick="LimpiarTodo">
+                            Limpiar
+                        </button>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(Error))
+                    {
+                        <div class="alert alert-danger mt-3">
+                            @Error
+                        </div>
+                    }
+                    else if (ResultadoVisible)
+                    {
+                        <div class="alert alert-success mt-3">
+                            <strong>Resultado:</strong> @Resultado
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private double Num1;
+    private double Num2;
+    private double Resultado;
+    private bool ResultadoVisible;
+    private string? Error;
+
+    void Sumar()
+    {
+        LimpiarEstado();
+        Resultado = Num1 + Num2;
+        ResultadoVisible = true;
+    }
+
+    void Restar()
+    {
+        LimpiarEstado();
+        Resultado = Num1 - Num2;
+        ResultadoVisible = true;
+    }
+
+    void Multiplicar()
+    {
+        LimpiarEstado();
+        Resultado = Num1 * Num2;
+        ResultadoVisible = true;
+    }
+
+    void Dividir()
+    {
+        LimpiarEstado();
+
+        if (Num2 == 0)
+        {
+            Error = "No se puede dividir entre cero.";
+            return;
+        }
+
+        Resultado = Num1 / Num2;
+        ResultadoVisible = true;
+    }
+
+    void LimpiarEstado()
+    {
+        Error = null;
+        ResultadoVisible = false;
+    }
+    
+    void LimpiarTodo()
+    {
+        Num1 = 0;
+        Num2 = 0;
+        Resultado = 0;
+        LimpiarEstado();
+    }
+}
