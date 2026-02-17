@@ -1,0 +1,130 @@
+## -----------------------------------------------
+## .gitignore para proyectos Blazor WebAssembly C#
+## -----------------------------------------------
+
+# ============================================================
+# Build / Output
+# ============================================================
+[Bb]in/
+[Oo]bj/
+[Oo]ut/
+build/
+publish/
+artifacts/
+
+# ============================================================
+# Visual Studio
+# ============================================================
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.userprefs
+*.pidb
+*.booproj
+.vscode/settings.json
+.vscode/launch.json
+
+# ============================================================
+# Rider / JetBrains
+# ============================================================
+.idea/
+*.sln.iml
+
+# ============================================================
+# .NET / NuGet
+# ============================================================
+*.nupkg
+*.snupkg
+project.lock.json
+project.fragment.lock.json
+artifacts/
+packages/
+!**/packages/build/
+nuget.config.user
+*.nuget.props
+*.nuget.targets
+
+# ============================================================
+# Blazor WebAssembly específico
+# ============================================================
+# Archivos generados por el compilador de Blazor (IL Linker / Wasm)
+wwwroot/_framework/
+wwwroot/appsettings.*.json        # evita exponer configs de entornos
+!wwwroot/appsettings.json         # mantiene la config base
+
+# Archivos de caché de hot reload
+.hotreload/
+
+# ============================================================
+# ASP.NET Core
+# ============================================================
+**/launchSettings.json            # contiene puertos/perfiles locales
+
+# ============================================================
+# Secretos y configuración sensible
+# ============================================================
+appsettings.Development.json
+appsettings.Production.json
+appsettings.Staging.json
+secrets.json
+*.pfx
+*.p12
+*.key
+*.pem
+.env
+.env.*
+
+# User Secrets (almacenados localmente por dotnet user-secrets)
+# No se suben, cada desarrollador los configura localmente
+
+# ============================================================
+# Logs y datos temporales
+# ============================================================
+*.log
+*.tmp
+*.temp
+Logs/
+logs/
+[Tt]emp/
+[Cc]ache/
+
+# ============================================================
+# Test / Coverage
+# ============================================================
+TestResults/
+coverage/
+*.coverage
+*.coveragexml
+*.trx
+BenchmarkDotNet.Artifacts/
+
+# ============================================================
+# Node / npm  (si usas herramientas JS como Tailwind, esbuild…)
+# ============================================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnp/
+.pnp.js
+dist/
+
+# ============================================================
+# Sistema operativo
+# ============================================================
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Linux
+*~
