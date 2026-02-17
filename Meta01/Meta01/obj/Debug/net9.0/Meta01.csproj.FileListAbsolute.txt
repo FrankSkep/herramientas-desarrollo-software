@@ -77,3 +77,4 @@
 /home/frankskep/Documentos/csharp/Meta01/Meta01/obj/Debug/net9.0/Meta01.pdb
 /home/frankskep/Documentos/csharp/Meta01/Meta01/obj/Debug/net9.0/Meta01.genruntimeconfig.cache
 /home/frankskep/Documentos/csharp/Meta01/Meta01/obj/Debug/net9.0/ref/Meta01.dll
+/home/frankskep/Documentos/csharp/Meta01/Meta01/obj/Debug/net9.0/Meta01.sourcelink.json

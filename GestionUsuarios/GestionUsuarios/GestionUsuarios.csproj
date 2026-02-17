@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <_ContentIncludedByDefault Remove="Components\Shared\GestionUsuario.razor" />
+      <_ContentIncludedByDefault Remove="Components\Shared\Table.razor" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Remove="Components\Pages\Counter.razor" />
+    </ItemGroup>
+
+</Project>

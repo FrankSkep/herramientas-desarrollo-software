@@ -1,0 +1,280 @@
+@page "/GestionUsuarios"
+@using global::GestionUsuarios.Models
+@rendermode InteractiveServer
+
+<PageTitle>Gestión de Usuarios</PageTitle>
+
+<div class="container mt-4">
+    <h3 class="text-center mb-4">Gestión de Usuarios</h3>
+
+    @* Mensaje de retroalimentación *@
+    @if (!string.IsNullOrEmpty(Mensaje))
+    {
+        <div class="alert @(EsError ? "alert-danger" : "alert-success") alert-dismissible fade show" role="alert">
+            <i class="bi @(EsError ? "bi-exclamation-triangle" : "bi-check-circle") me-2"></i>
+            @Mensaje
+            <button type="button" class="btn-close" @onclick="@(() => Mensaje = string.Empty)"></button>
+        </div>
+    }
+
+    @* Formulario de registro/edición *@
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">
+                @if (ModoEdicion)
+                {
+                    <i class="bi bi-pencil-square me-2"></i>
+                    <span>Editar Usuario</span>
+                }
+                else
+                {
+                    <i class="bi bi-person-plus me-2"></i>
+                    <span>Registrar Nuevo Usuario</span>
+                }
+            </h5>
+        </div>
+        <div class="card-body">
+            <EditForm Model="@usuarioActual" OnValidSubmit="GuardarUsuario">
+                <DataAnnotationsValidator />
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Nombre de Usuario:</label>
+                        <InputText class="form-control" @bind-Value="usuarioActual.NombreUsuario" placeholder="Ingrese el nombre" />
+                        <ValidationMessage For="@(() => usuarioActual.NombreUsuario)" class="text-danger" />
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Correo Electrónico:</label>
+                        <InputText class="form-control" @bind-Value="usuarioActual.Email" placeholder="ejemplo@correo.com" type="email" />
+                        <ValidationMessage For="@(() => usuarioActual.Email)" class="text-danger" />
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold">Edad:</label>
+                        <InputNumber class="form-control" @bind-Value="usuarioActual.Edad" placeholder="18" />
+                        <ValidationMessage For="@(() => usuarioActual.Edad)" class="text-danger" />
+                    </div>
+                </div>
+
+                <ValidationSummary class="text-danger mb-3" />
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-plus-circle"></i>
+                        @(ModoEdicion ? "Actualizar" : "Agregar")
+                    </button>
+                    
+                    @if (ModoEdicion)
+                    {
+                        <button type="button" class="btn btn-secondary" @onclick="CancelarEdicion">
+                            <i class="bi bi-x-circle me-1"></i>
+                            Cancelar
+                        </button>
+                    }
+                </div>
+            </EditForm>
+        </div>
+    </div>
+
+    @* Lista de usuarios *@
+    <div class="card shadow-sm">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0">Usuarios Registrados</h5>
+        </div>
+        <div class="card-body">
+            @if (listaUsuarios.Count == 0)
+            {
+                <div class="alert alert-warning text-center" role="alert">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <strong>No hay usuarios registrados.</strong> Agregue el primer usuario usando el formulario anterior.
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">Nombre</th>
+                                <th scope="col">Email</th>
+                                <th scope="col">Edad</th>
+                                <th scope="col" class="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var usuario in listaUsuarios)
+                            {
+                                <tr>
+                                    <th scope="row">@usuario.IdUsuario</th>
+                                    <td>@usuario.NombreUsuario</td>
+                                    <td>@usuario.Email</td>
+                                    <td>@usuario.Edad años</td>
+                                    <td class="text-center">
+                                        <button class="btn btn-sm btn-warning me-1" @onclick="@(() => EditarUsuario(usuario))">
+                                            <i class="bi bi-pencil-square"></i>
+                                            Editar
+                                        </button>
+
+                                        <button class="btn btn-sm btn-danger" @onclick="@(() => EliminarUsuario(usuario.IdUsuario))">
+                                            <i class="bi bi-trash"></i>
+                                            Eliminar
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="mt-3">
+                    <p class="text-muted mb-0">
+                        <strong>Total de usuarios registrados:</strong> @listaUsuarios.Count
+                    </p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    // Lista que almacena todos los usuarios
+    private List<UsuarioDTO> listaUsuarios = new List<UsuarioDTO>();
+
+    // Usuario actual que se está editando o creando
+    private UsuarioDTO usuarioActual = new UsuarioDTO();
+
+    // Variable para controlar si estamos en modo edición
+    private bool ModoEdicion = false;
+
+    // Variables para mostrar mensajes al usuario
+    private string Mensaje = string.Empty;
+    private bool EsError = false;
+
+    // Contador para generar IDs únicos
+    private int contadorId = 1;
+
+    /// <summary>
+    /// Guarda o actualiza un usuario en la lista
+    /// </summary>
+    private void GuardarUsuario()
+    {
+        try
+        {
+            if (ModoEdicion)
+            {
+                // Actualizar usuario existente
+                var usuarioExistente = listaUsuarios.FirstOrDefault(u => u.IdUsuario == usuarioActual.IdUsuario);
+                if (usuarioExistente != null)
+                {
+                    usuarioExistente.NombreUsuario = usuarioActual.NombreUsuario;
+                    usuarioExistente.Email = usuarioActual.Email;
+                    usuarioExistente.Edad = usuarioActual.Edad;
+
+                    MostrarMensaje("Usuario actualizado correctamente", false);
+                    ModoEdicion = false;
+                }
+            }
+            else
+            {
+                // Verificar si el email ya existe
+                if (listaUsuarios.Any(u => u.Email.ToLower() == usuarioActual.Email.ToLower()))
+                {
+                    MostrarMensaje("Ya existe un usuario con ese correo electrónico", true);
+                    return;
+                }
+
+                // Agregar nuevo usuario
+                usuarioActual.IdUsuario = contadorId++;
+                listaUsuarios.Add(new UsuarioDTO
+                {
+                    IdUsuario = usuarioActual.IdUsuario,
+                    NombreUsuario = usuarioActual.NombreUsuario,
+                    Email = usuarioActual.Email,
+                    Edad = usuarioActual.Edad
+                });
+
+                MostrarMensaje("Usuario agregado correctamente", false);
+            }
+
+            // Limpiar el formulario
+            LimpiarFormulario();
+        }
+        catch (Exception ex)
+        {
+            MostrarMensaje($"Error al guardar el usuario: {ex.Message}", true);
+        }
+    }
+
+    /// <summary>
+    /// Prepara el formulario para editar un usuario
+    /// </summary>
+    private void EditarUsuario(UsuarioDTO usuario)
+    {
+        ModoEdicion = true;
+        usuarioActual = new UsuarioDTO
+        {
+            IdUsuario = usuario.IdUsuario,
+            NombreUsuario = usuario.NombreUsuario,
+            Email = usuario.Email,
+            Edad = usuario.Edad
+        };
+        MostrarMensaje("Modo de edición activado. Modifique los campos y presione Actualizar", false);
+    }
+
+    /// <summary>
+    /// Elimina un usuario de la lista
+    /// </summary>
+    private void EliminarUsuario(int idUsuario)
+    {
+        try
+        {
+            var usuario = listaUsuarios.FirstOrDefault(u => u.IdUsuario == idUsuario);
+            if (usuario != null)
+            {
+                listaUsuarios.Remove(usuario);
+                MostrarMensaje($"Usuario '{usuario.NombreUsuario}' eliminado correctamente", false);
+                
+                // Si estábamos editando ese usuario, cancelar la edición
+                if (ModoEdicion && usuarioActual.IdUsuario == idUsuario)
+                {
+                    CancelarEdicion();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            MostrarMensaje($"Error al eliminar el usuario: {ex.Message}", true);
+        }
+    }
+
+    /// <summary>
+    /// Cancela el modo de edición y limpia el formulario
+    /// </summary>
+    private void CancelarEdicion()
+    {
+        ModoEdicion = false;
+        LimpiarFormulario();
+        MostrarMensaje("Edición cancelada", false);
+    }
+
+    /// <summary>
+    /// Limpia el formulario y reinicia el usuario actual
+    /// </summary>
+    private void LimpiarFormulario()
+    {
+        usuarioActual = new UsuarioDTO();
+    }
+
+    /// <summary>
+    /// Muestra un mensaje de retroalimentación al usuario
+    /// </summary>
+    private void MostrarMensaje(string mensaje, bool esError)
+    {
+        Mensaje = mensaje;
+        EsError = esError;
+    }
+}
