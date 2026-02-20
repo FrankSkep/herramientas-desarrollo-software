@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using GestionHospital.Components;
 using GestionHospital.Components.Account;
 using GestionHospital.Data;
+using Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,11 +24,16 @@ builder.Services.AddAuthentication(options =>
     })
     .AddIdentityCookies();
 
+// Contextos de base de datos
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ??
                        throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+
+// Contexto principal del hospital
+builder.Services.AddDbContext<DBContextHM>(options =>
+    options.UseSqlServer(connectionString));
 
 builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
     .AddEntityFrameworkStores<ApplicationDbContext>()
