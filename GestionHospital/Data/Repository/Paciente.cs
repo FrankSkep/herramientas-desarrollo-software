@@ -3,31 +3,33 @@ namespace Data.Repository;
 using Microsoft.Extensions.Logging;
 using Data.IRepository;
 using Microsoft.EntityFrameworkCore;
-using Entity.Models;
+using PacienteModel = Entity.Models.Paciente;
 
-public class Paciente : IPaciente
+public class PacienteRepository : IPaciente
 {
     private readonly DBContextHM _context;
-    private readonly ILogger<Paciente> _logger;
+    private readonly ILogger<PacienteRepository> _logger;
 
-    public Paciente(DBContextHM context, ILogger<Paciente> logger)
+    public PacienteRepository(DBContextHM context, ILogger<PacienteRepository> logger)
     {
         _context = context;
         _logger = logger;
     }
 
-    public async Task<Entity.Models.Paciente> InsertarPacienteAsync(Entity.Models.Paciente paciente)
+    // Crear nuevo paciente
+    public async Task<PacienteModel> InsertarPacienteAsync(PacienteModel paciente)
     {
         using var transaction = await _context.Database.BeginTransactionAsync();
-
         try
         {
-            // validar que no exista email duplicado
-            if (!string.IsNullOrEmpty(paciente.Telefono) && await ExisteTelefonoDePacienteAsync(paciente.Telefono))
+            // Validar que no exista teléfono duplicado
+            if (!string.IsNullOrEmpty(paciente.Telefono) &&
+                await ExisteTelefonoDePacienteAsync(paciente.Telefono))
             {
-                throw new InvalidOperationException("El teléfono no puede estar vacío.");
+                throw new InvalidOperationException($"Ya existe un paciente con el teléfono {paciente.Telefono}");
             }
 
+            // Establecer fecha de registro si no viene
             if (paciente.FechaRegistro == default)
             {
                 paciente.FechaRegistro = DateTime.Today;
@@ -36,17 +38,19 @@ public class Paciente : IPaciente
             await _context.Pacientes.AddAsync(paciente);
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
-            _logger.LogInformation("Paciente insertado con ID {IdPaciente}", paciente.IdPaciente);
+
+            _logger.LogInformation("Paciente creado exitosamente con ID: {IdPaciente}", paciente.IdPaciente);
             return paciente;
         }
         catch (Exception ex)
         {
             await transaction.RollbackAsync();
-            _logger.LogError("Error al insertar paciente: {Message}", ex.Message);
-            return null;
+            _logger.LogError(ex, "Error al crear paciente");
+            throw;
         }
     }
 
+    // Eliminar paciente
     public async Task<bool> BorrarPacienteAsync(int id)
     {
         using var transaction = await _context.Database.BeginTransactionAsync();
@@ -56,17 +60,19 @@ public class Paciente : IPaciente
                 .Include(p => p.Citas)
                 .Include(p => p.HistorialesMedicos)
                 .FirstOrDefaultAsync(p => p.IdPaciente == id);
+
             if (paciente == null)
             {
                 _logger.LogWarning("Intento de eliminar paciente inexistente ID: {IdPaciente}", id);
                 return false;
             }
 
+            // Verificar si tiene citas o historiales médicos
             if (paciente.Citas != null && paciente.Citas.Any())
             {
                 throw new InvalidOperationException("No se puede eliminar el paciente porque tiene citas asociadas.");
             }
-            
+
             if (paciente.HistorialesMedicos != null && paciente.HistorialesMedicos.Any())
             {
                 throw new InvalidOperationException("No se puede eliminar el paciente porque tiene historiales médicos asociados.");
@@ -75,64 +81,64 @@ public class Paciente : IPaciente
             _context.Pacientes.Remove(paciente);
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
-            _logger.LogInformation("Paciente eliminado con ID {IdPaciente}", id);
+
+            _logger.LogInformation("Paciente eliminado exitosamente con ID: {IdPaciente}", id);
             return true;
-        } catch (Exception ex)
+        }
+        catch (Exception ex)
         {
             await transaction.RollbackAsync();
-            _logger.LogError(ex, "Error al eliminar paciente con ID {IdPaciente}", id);
-            return false;
+            _logger.LogError(ex, "Error al eliminar paciente con ID: {IdPaciente}", id);
+            throw;
         }
     }
 
-    public async Task<Entity.Models.Paciente> ModificarPacienteAsync(Entity.Models.Paciente paciente)
+    // Actualizar paciente existente
+    public async Task<PacienteModel> ModificarPacienteAsync(PacienteModel paciente)
     {
-        using var transaction = _context.Database.BeginTransaction();
+        using var transaction = await _context.Database.BeginTransactionAsync();
         try
         {
             var pacienteExistente = await _context.Pacientes
                 .FirstOrDefaultAsync(p => p.IdPaciente == paciente.IdPaciente);
-            if (pacienteExistente is null)
+
+            if (pacienteExistente == null)
             {
-                throw new KeyNotFoundException("Paciente no encontrado");
+                throw new KeyNotFoundException($"No se encontró paciente con ID: {paciente.IdPaciente}");
             }
 
+            // Validar teléfono único (excluyendo el actual)
+            if (!string.IsNullOrEmpty(paciente.Telefono) &&
+                await ExisteTelefonoDePacienteAsync(paciente.Telefono, paciente.IdPaciente))
+            {
+                throw new InvalidOperationException($"Ya existe otro paciente con el teléfono {paciente.Telefono}");
+            }
+
+            // Actualizar propiedades
             _context.Entry(pacienteExistente).CurrentValues.SetValues(paciente);
+
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
-            
-            _logger.LogInformation("Paciente modificado con ID {IdPaciente}", paciente.IdPaciente);
+
+            _logger.LogInformation("Paciente actualizado exitosamente con ID: {IdPaciente}", paciente.IdPaciente);
             return pacienteExistente;
         }
         catch (Exception ex)
         {
             await transaction.RollbackAsync();
-            _logger.LogError("Error al modificar paciente con ID {IdPaciente}: {Message}", paciente.IdPaciente, ex.Message);
+            _logger.LogError(ex, "Error al actualizar paciente con ID: {IdPaciente}", paciente.IdPaciente);
             throw;
         }
     }
 
-    public Task<IEnumerable<Entity.Models.Paciente>> ObtenerTodosLosPacientesAsync()
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<Entity.Models.Paciente> ObtenerPacientePorIdAsync(int id)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<IEnumerable<Entity.Models.Paciente>> BuscarPacientePorNombreAsync(string termino)
-    {
-        throw new NotImplementedException();
-    }
-
-    public async Task<IEnumerable<Entity.Models.Paciente>> ObtenerPacientePorFechaIngresoAsync(DateOnly fechaInicio, DateOnly fechaFin)
+    // Obtener todos los pacientes
+    public async Task<IEnumerable<PacienteModel>> ObtenerTodosLosPacientesAsync()
     {
         try
         {
             return await _context.Pacientes
                 .OrderBy(p => p.Nombre)
+                .AsNoTracking()
                 .ToListAsync();
         }
         catch (Exception ex)
@@ -142,23 +148,124 @@ public class Paciente : IPaciente
         }
     }
 
+    // Obtener paciente por ID
+    public async Task<PacienteModel> ObtenerPacientePorIdAsync(int id)
+    {
+        try
+        {
+            return await _context.Pacientes
+                .AsNoTracking()
+                .FirstOrDefaultAsync(p => p.IdPaciente == id);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al obtener paciente con ID: {IdPaciente}", id);
+            throw;
+        }
+    }
+
+    // Buscar pacientes por nombre (búsqueda parcial)
+    public async Task<IEnumerable<PacienteModel>> BuscarPacientePorNombreAsync(string termino)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(termino))
+                return await ObtenerTodosLosPacientesAsync();
+
+            termino = termino.Trim().ToLower();
+
+            return await _context.Pacientes
+                .Where(p => p.Nombre.ToLower().Contains(termino))
+                .OrderBy(p => p.Nombre)
+                .AsNoTracking()
+                .ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al buscar pacientes con término: {Termino}", termino);
+            throw;
+        }
+    }
+
+    // Obtener pacientes por rango de fecha de ingreso
+    public async Task<IEnumerable<PacienteModel>> ObtenerPacientePorFechaIngresoAsync(DateOnly fechaInicio, DateOnly fechaFin)
+    {
+        try
+        {
+            var inicio = fechaInicio.ToDateTime(TimeOnly.MinValue);
+            var fin = fechaFin.ToDateTime(TimeOnly.MaxValue);
+
+            return await _context.Pacientes
+                .Where(p => p.FechaRegistro >= inicio && p.FechaRegistro <= fin)
+                .OrderBy(p => p.FechaRegistro)
+                .ThenBy(p => p.Nombre)
+                .AsNoTracking()
+                .ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al obtener pacientes por fecha de ingreso");
+            throw;
+        }
+    }
+
+    // Verificar si existe email (no disponible en el modelo actual)
     public Task<bool> ExisteEmailDePacienteAsync(string email, int? idExcluir = null)
     {
-        throw new NotImplementedException();
+        // El modelo Paciente no cuenta con campo Email
+        throw new NotSupportedException("El modelo Paciente no tiene campo Email.");
     }
 
-    public Task<bool> ExisteTelefonoDePacienteAsync(string telefono, int? idExcluir = null)
+    // Verificar si existe teléfono
+    public async Task<bool> ExisteTelefonoDePacienteAsync(string telefono, int? idExcluir = null)
     {
-        throw new NotImplementedException();
+        try
+        {
+            var query = _context.Pacientes.Where(p => p.Telefono == telefono);
+
+            if (idExcluir.HasValue)
+            {
+                query = query.Where(p => p.IdPaciente != idExcluir.Value);
+            }
+
+            return await query.AnyAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al verificar existencia de teléfono: {Telefono}", telefono);
+            throw;
+        }
     }
 
-    public Task<Entity.Models.Paciente?> ObtenerPacienteConRelacionesAsync(int id)
+    // Obtener paciente con todas sus relaciones (citas e historiales médicos)
+    public async Task<PacienteModel?> ObtenerPacienteConRelacionesAsync(int id)
     {
-        throw new NotImplementedException();
+        try
+        {
+            return await _context.Pacientes
+                .Include(p => p.Citas)
+                .Include(p => p.HistorialesMedicos)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(p => p.IdPaciente == id);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al obtener paciente con relaciones ID: {IdPaciente}", id);
+            throw;
+        }
     }
 
-    public Task<int> ContarPacientesAsync()
+    // Contar total de pacientes
+    public async Task<int> ContarPacientesAsync()
     {
-        throw new NotImplementedException();
+        try
+        {
+            return await _context.Pacientes.CountAsync();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al contar total de pacientes");
+            throw;
+        }
     }
 }

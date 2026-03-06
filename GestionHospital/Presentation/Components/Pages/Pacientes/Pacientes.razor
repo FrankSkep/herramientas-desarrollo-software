@@ -1,0 +1,576 @@
+@page "/pacientes/listado"
+@rendermode InteractiveServer
+@using Business.IRepository
+@using Entity.Models
+@inject INPaciente PacienteService
+@inject IJSRuntime JS
+
+<PageTitle>Gestión de Pacientes</PageTitle>
+
+<div class="container-fluid">
+
+    <!-- Encabezado -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-0">
+                <span class="me-2">🏥</span> Pacientes
+            </h2>
+            <small class="text-muted">Total registrados: <strong>@totalPacientes</strong></small>
+        </div>
+        <button class="btn btn-primary" @onclick="AbrirFormularioNuevo">
+            <i class="bi bi-plus-lg me-1"></i> Nuevo Paciente
+        </button>
+    </div>
+
+    <!-- Barra de búsqueda y filtros -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-5">
+                    <label class="form-label fw-semibold">Buscar por nombre</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" class="form-control" placeholder="Escribe un nombre..."
+                               value="@terminoBusqueda"
+                               @oninput="async e => { terminoBusqueda = e.Value?.ToString() ?? string.Empty; await BuscarPacientes(); }" />
+                        @if (!string.IsNullOrEmpty(terminoBusqueda))
+                        {
+                            <button class="btn btn-outline-secondary" @onclick="LimpiarBusqueda">✕</button>
+                        }
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Fecha inicio</label>
+                    <input type="date" class="form-control" @bind="fechaInicio" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Fecha fin</label>
+                    <input type="date" class="form-control" @bind="fechaFin" />
+                </div>
+                <div class="col-md-1">
+                    <button class="btn btn-outline-primary w-100" @onclick="FiltrarPorFecha" title="Filtrar por fecha">
+                        <i class="bi bi-calendar-event"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mensajes de alerta -->
+    @if (!string.IsNullOrEmpty(mensajeExito))
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i> @mensajeExito
+            <button type="button" class="btn-close" @onclick="() => mensajeExito = string.Empty"></button>
+        </div>
+    }
+    @if (!string.IsNullOrEmpty(mensajeError))
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> @mensajeError
+            <button type="button" class="btn-close" @onclick="() => mensajeError = string.Empty"></button>
+        </div>
+    }
+
+    <!-- Tabla de pacientes -->
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            @if (cargando)
+            {
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <p class="mt-2 text-muted">Cargando pacientes...</p>
+                </div>
+            }
+            else if (!pacientesMostrados.Any())
+            {
+                <div class="text-center py-5 text-muted">
+                    <div style="font-size: 3rem;">👤</div>
+                    <h5>No se encontraron pacientes</h5>
+                    <p>Intenta con otro término de búsqueda o registra uno nuevo.</p>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-primary">
+                            <tr>
+                                <th>#</th>
+                                <th>Nombre</th>
+                                <th>Fecha Nacimiento</th>
+                                <th>Edad</th>
+                                <th>Género</th>
+                                <th>Teléfono</th>
+                                <th>Tipo Sangre</th>
+                                <th>Fecha Registro</th>
+                                <th class="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var paciente in pacientesMostrados)
+                            {
+                                <tr>
+                                    <td><span class="badge bg-secondary">@paciente.IdPaciente</span></td>
+                                    <td>
+                                        <strong>@paciente.Nombre</strong>
+                                    </td>
+                                    <td>@paciente.FechaNacimiento.ToString("dd/MM/yyyy")</td>
+                                    <td>
+                                        <span class="badge bg-light text-dark border">
+                                            @CalcularEdad(paciente.FechaNacimiento) años
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge @(paciente.Genero == "Masculino" ? "bg-primary" : paciente.Genero == "Femenino" ? "bg-danger" : "bg-secondary")">
+                                            @paciente.Genero
+                                        </span>
+                                    </td>
+                                    <td>@(paciente.Telefono ?? "—")</td>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(paciente.TipoSangre))
+                                        {
+                                            <span class="badge bg-danger">@paciente.TipoSangre</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">—</span>
+                                        }
+                                    </td>
+                                    <td>@paciente.FechaRegistro.ToString("dd/MM/yyyy")</td>
+                                    <td class="text-center">
+                                        <button class="btn btn-sm btn-outline-info me-1"
+                                                @onclick="() => VerDetalle(paciente)"
+                                                title="Ver detalle">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-warning me-1"
+                                                @onclick="() => AbrirFormularioEditar(paciente)"
+                                                title="Editar">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger"
+                                                @onclick="() => ConfirmarEliminar(paciente)"
+                                                title="Eliminar">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Modal Formulario Crear/Editar -->
+@if (mostrarFormulario)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,.5)">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">
+                        <i class="bi @(esEdicion ? "bi-pencil-square" : "bi-person-plus-fill") me-2"></i>
+                        @(esEdicion ? "Editar Paciente" : "Nuevo Paciente")
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="CerrarFormulario"></button>
+                </div>
+                <div class="modal-body">
+                    <EditForm Model="pacienteForm" OnValidSubmit="GuardarPaciente">
+                        <DataAnnotationsValidator />
+                        <div class="row g-3">
+                            <div class="col-md-12">
+                                <label class="form-label fw-semibold">Nombre completo <span class="text-danger">*</span></label>
+                                <InputText class="form-control" @bind-Value="pacienteForm.Nombre" placeholder="Ej. Juan Pérez García" />
+                                <ValidationMessage For="@(() => pacienteForm.Nombre)" class="text-danger small" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Fecha de nacimiento <span class="text-danger">*</span></label>
+                                <InputDate class="form-control" @bind-Value="pacienteForm.FechaNacimiento" />
+                                <ValidationMessage For="@(() => pacienteForm.FechaNacimiento)" class="text-danger small" />
+                                @if (pacienteForm.FechaNacimiento != default)
+                                {
+                                    <small class="text-muted">Edad: @CalcularEdad(pacienteForm.FechaNacimiento) años</small>
+                                }
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Género <span class="text-danger">*</span></label>
+                                <InputSelect class="form-select" @bind-Value="pacienteForm.Genero">
+                                    <option value="">-- Selecciona --</option>
+                                    <option value="Masculino">Masculino</option>
+                                    <option value="Femenino">Femenino</option>
+                                    <option value="Otro">Otro</option>
+                                </InputSelect>
+                                <ValidationMessage For="@(() => pacienteForm.Genero)" class="text-danger small" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Teléfono</label>
+                                <InputText class="form-control" @bind-Value="pacienteForm.Telefono" placeholder="Ej. 5512345678" />
+                                <ValidationMessage For="@(() => pacienteForm.Telefono)" class="text-danger small" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Tipo de Sangre</label>
+                                <InputSelect class="form-select" @bind-Value="pacienteForm.TipoSangre">
+                                    <option value="">-- Desconocido --</option>
+                                    <option value="A+">A+</option>
+                                    <option value="A-">A-</option>
+                                    <option value="B+">B+</option>
+                                    <option value="B-">B-</option>
+                                    <option value="AB+">AB+</option>
+                                    <option value="AB-">AB-</option>
+                                    <option value="O+">O+</option>
+                                    <option value="O-">O-</option>
+                                </InputSelect>
+                            </div>
+                            <div class="col-md-12">
+                                <label class="form-label fw-semibold">Dirección</label>
+                                <InputText class="form-control" @bind-Value="pacienteForm.Direccion" placeholder="Ej. Calle Reforma 123, Col. Centro" />
+                            </div>
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(errorFormulario))
+                        {
+                            <div class="alert alert-danger mt-3 mb-0">
+                                <i class="bi bi-exclamation-octagon me-1"></i> @errorFormulario
+                            </div>
+                        }
+
+                        <div class="modal-footer px-0 pb-0 mt-4">
+                            <button type="button" class="btn btn-secondary" @onclick="CerrarFormulario" disabled="@guardando">
+                                Cancelar
+                            </button>
+                            <button type="submit" class="btn btn-primary" disabled="@guardando">
+                                @if (guardando)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-1"></span>
+                                }
+                                @(esEdicion ? "Guardar cambios" : "Registrar paciente")
+                            </button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Modal Detalle -->
+@if (mostrarDetalle && pacienteDetalle != null)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,.5)">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title">
+                        <i class="bi bi-person-vcard me-2"></i> Detalle del Paciente
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="() => mostrarDetalle = false"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-12 text-center mb-2">
+                            <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center"
+                                 style="width:80px;height:80px;font-size:2rem;">
+                                @pacienteDetalle.Nombre.First()
+                            </div>
+                            <h4 class="mt-2 mb-0">@pacienteDetalle.Nombre</h4>
+                            <small class="text-muted">ID: @pacienteDetalle.IdPaciente</small>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card h-100 border-0 bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-title text-primary">📋 Información Personal</h6>
+                                    <p class="mb-1"><strong>Fecha Nac.:</strong> @pacienteDetalle.FechaNacimiento.ToString("dd/MM/yyyy")</p>
+                                    <p class="mb-1"><strong>Edad:</strong> @CalcularEdad(pacienteDetalle.FechaNacimiento) años</p>
+                                    <p class="mb-1"><strong>Género:</strong> @pacienteDetalle.Genero</p>
+                                    <p class="mb-0"><strong>Tipo Sangre:</strong>
+                                        @if (!string.IsNullOrEmpty(pacienteDetalle.TipoSangre))
+                                        {
+                                            <span class="badge bg-danger ms-1">@pacienteDetalle.TipoSangre</span>
+                                        }
+                                        else { <span class="text-muted">No registrado</span> }
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card h-100 border-0 bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-title text-primary">📞 Contacto</h6>
+                                    <p class="mb-1"><strong>Teléfono:</strong> @(pacienteDetalle.Telefono ?? "No registrado")</p>
+                                    <p class="mb-1"><strong>Dirección:</strong> @(pacienteDetalle.Direccion ?? "No registrada")</p>
+                                    <p class="mb-0"><strong>Registro:</strong> @pacienteDetalle.FechaRegistro.ToString("dd/MM/yyyy")</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-warning me-2" @onclick="() => { mostrarDetalle = false; AbrirFormularioEditar(pacienteDetalle); }">
+                        <i class="bi bi-pencil me-1"></i> Editar
+                    </button>
+                    <button class="btn btn-secondary" @onclick="() => mostrarDetalle = false">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Modal Confirmar Eliminar -->
+@if (mostrarConfirmacion && pacienteAEliminar != null)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,.5)">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title"><i class="bi bi-trash3 me-2"></i> Eliminar Paciente</h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="() => mostrarConfirmacion = false" disabled="@eliminando"></button>
+                </div>
+                <div class="modal-body text-center py-4">
+                    <div style="font-size:3rem"><i class="bi bi-exclamation-triangle text-danger"></i></div>
+                    <h5 class="mt-2">¿Estás seguro?</h5>
+                    <p class="text-muted">
+                        Estás a punto de eliminar al paciente<br />
+                        <strong>@pacienteAEliminar.Nombre</strong><br />
+                        <small>Esta acción no se puede deshacer.</small>
+                    </p>
+                </div>
+                <div class="modal-footer justify-content-center">
+                    <button class="btn btn-secondary" @onclick="() => mostrarConfirmacion = false" disabled="@eliminando">
+                        Cancelar
+                    </button>
+                    <button class="btn btn-danger" @onclick="EliminarPaciente" disabled="@eliminando">
+                        @if (eliminando)
+                        {
+                            <span class="spinner-border spinner-border-sm me-1"></span>
+                        }
+                        Sí, eliminar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    // --- Estado general ---
+    private List<Paciente> todosPacientes = new();
+    private List<Paciente> pacientesMostrados = new();
+    private int totalPacientes;
+    private bool cargando = true;
+    private string mensajeExito = string.Empty;
+    private string mensajeError = string.Empty;
+
+    // --- Búsqueda y filtros ---
+    private string terminoBusqueda = string.Empty;
+    private DateTime? fechaInicio;
+    private DateTime? fechaFin;
+
+    // --- Formulario ---
+    private bool mostrarFormulario;
+    private bool esEdicion;
+    private bool guardando;
+    private string errorFormulario = string.Empty;
+    private Paciente pacienteForm = new();
+
+    // --- Detalle ---
+    private bool mostrarDetalle;
+    private Paciente? pacienteDetalle;
+
+    // --- Eliminar ---
+    private bool mostrarConfirmacion;
+    private bool eliminando;
+    private Paciente? pacienteAEliminar;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarPacientes();
+    }
+
+    private async Task CargarPacientes()
+    {
+        cargando = true;
+        try
+        {
+            todosPacientes = (await PacienteService.ObtenerTodosLosPacientesAsync()).ToList();
+            pacientesMostrados = todosPacientes;
+            totalPacientes = await PacienteService.ContarTotalPacientesAsync();
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"Error al cargar pacientes: {ex.Message}";
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private async Task BuscarPacientes()
+    {
+        if (string.IsNullOrWhiteSpace(terminoBusqueda) || terminoBusqueda.Length < 2)
+        {
+            pacientesMostrados = todosPacientes;
+            return;
+        }
+        try
+        {
+            pacientesMostrados = (await PacienteService.BuscarPacientesPorNombreAsync(terminoBusqueda)).ToList();
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"Error al buscar: {ex.Message}";
+        }
+    }
+
+    private async Task FiltrarPorFecha()
+    {
+        if (fechaInicio == null || fechaFin == null)
+        {
+            mensajeError = "Selecciona ambas fechas para filtrar.";
+            return;
+        }
+        if (fechaInicio > fechaFin)
+        {
+            mensajeError = "La fecha de inicio no puede ser mayor que la fecha fin.";
+            return;
+        }
+        try
+        {
+            mensajeError = string.Empty;
+            var inicio = DateOnly.FromDateTime(fechaInicio.Value);
+            var fin = DateOnly.FromDateTime(fechaFin.Value);
+            pacientesMostrados = (await PacienteService.ObtenerPacientesPorRangoFechasAsync(inicio, fin)).ToList();
+        }
+        catch (Exception ex)
+        {
+            mensajeError = $"Error al filtrar: {ex.Message}";
+        }
+    }
+
+    private void LimpiarBusqueda()
+    {
+        terminoBusqueda = string.Empty;
+        fechaInicio = null;
+        fechaFin = null;
+        pacientesMostrados = todosPacientes;
+    }
+
+    // --- Formulario ---
+    private void AbrirFormularioNuevo()
+    {
+        pacienteForm = new Paciente { FechaNacimiento = DateTime.Today.AddYears(-30) };
+        esEdicion = false;
+        errorFormulario = string.Empty;
+        mostrarFormulario = true;
+    }
+
+    private void AbrirFormularioEditar(Paciente paciente)
+    {
+        pacienteForm = new Paciente
+        {
+            IdPaciente = paciente.IdPaciente,
+            Nombre = paciente.Nombre,
+            FechaNacimiento = paciente.FechaNacimiento,
+            Genero = paciente.Genero,
+            Telefono = paciente.Telefono,
+            Direccion = paciente.Direccion,
+            TipoSangre = paciente.TipoSangre,
+            FechaRegistro = paciente.FechaRegistro
+        };
+        esEdicion = true;
+        errorFormulario = string.Empty;
+        mostrarFormulario = true;
+    }
+
+    private void CerrarFormulario()
+    {
+        mostrarFormulario = false;
+        errorFormulario = string.Empty;
+    }
+
+    private async Task GuardarPaciente()
+    {
+        guardando = true;
+        errorFormulario = string.Empty;
+        try
+        {
+            if (esEdicion)
+            {
+                await PacienteService.ModificarPacienteAsync(pacienteForm);
+                mensajeExito = $"Paciente '{pacienteForm.Nombre}' actualizado correctamente.";
+            }
+            else
+            {
+                await PacienteService.InsertarPacienteAsync(pacienteForm);
+                mensajeExito = $"Paciente '{pacienteForm.Nombre}' registrado correctamente.";
+            }
+            mostrarFormulario = false;
+            await CargarPacientes();
+        }
+        catch (Exception ex)
+        {
+            errorFormulario = ex.Message;
+        }
+        finally
+        {
+            guardando = false;
+        }
+    }
+
+    // --- Detalle ---
+    private void VerDetalle(Paciente paciente)
+    {
+        pacienteDetalle = paciente;
+        mostrarDetalle = true;
+    }
+
+    // --- Eliminar ---
+    private void ConfirmarEliminar(Paciente paciente)
+    {
+        pacienteAEliminar = paciente;
+        mostrarConfirmacion = true;
+    }
+
+    private async Task EliminarPaciente()
+    {
+        if (pacienteAEliminar == null) return;
+        eliminando = true;
+        try
+        {
+            var resultado = await PacienteService.BorrarPacienteAsync(pacienteAEliminar.IdPaciente);
+            if (resultado)
+            {
+                mensajeExito = $"Paciente '{pacienteAEliminar.Nombre}' eliminado correctamente.";
+                mostrarConfirmacion = false;
+                await CargarPacientes();
+            }
+            else
+            {
+                mensajeError = "No se pudo eliminar el paciente.";
+            }
+        }
+        catch (Exception ex)
+        {
+            mensajeError = ex.Message;
+            mostrarConfirmacion = false;
+        }
+        finally
+        {
+            eliminando = false;
+        }
+    }
+
+    // --- Utilidades ---
+    private int CalcularEdad(DateTime fechaNacimiento)
+    {
+        var hoy = DateTime.Today;
+        var edad = hoy.Year - fechaNacimiento.Year;
+        if (fechaNacimiento.Date > hoy.AddYears(-edad)) edad--;
+        return edad;
+    }
+}
+

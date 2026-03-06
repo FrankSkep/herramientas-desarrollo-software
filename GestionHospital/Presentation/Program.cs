@@ -5,6 +5,10 @@ using GestionHospital.Components;
 using GestionHospital.Components.Account;
 using GestionHospital.Data;
 using Data;
+using Data.IRepository;
+using Data.Repository;
+using Business.IRepository;
+using Business.Repository;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -41,6 +45,12 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.Requ
     .AddDefaultTokenProviders();
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
+
+// Repositorios de datos
+builder.Services.AddScoped<IPaciente, PacienteRepository>();
+
+// Servicios de negocio
+builder.Services.AddScoped<INPaciente, PacienteNegocio>();
 
 var app = builder.Build();
 
