@@ -5,8 +5,8 @@ namespace Dominio.Entidades.Evoluciones;
 
 public class Evolucion
 {
-    public int HistoriaClinicaId { get; set; }
-    public int DoctorId { get; set; }
+    public int IdHistoriaClinica { get; set; }
+    public int IdDoctor { get; set; }
     public DateTime Fecha { get; set; } = DateTime.UtcNow;
     public string Diagnostico { get; set; } = string.Empty;
     public string Tratamiento { get; set; } = string.Empty;

@@ -6,9 +6,9 @@ namespace Dominio.Entidades.Doctores;
 
 public class Doctor : EntidadBase
 {
+    public int IdEspecialidad { get; set; }
     public string Nombres { get; set; } = string.Empty;
     public string Apellidos { get; set; } = string.Empty;
-    public int EspecialidadId { get; set; }
     public string Telefono { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string HorarioAtencion { get; set; } = string.Empty;

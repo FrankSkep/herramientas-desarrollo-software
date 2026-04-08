@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace Dominio.Enumeraciones;
 
 public enum EstadoCita
@@ -6,5 +8,6 @@ public enum EstadoCita
     Confirmada = 2,
     Cancelada = 3,
     Completada = 4,
+    [Display (Name = "No asistió")]
     NoAsistio = 5
 }

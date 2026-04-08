@@ -7,15 +7,24 @@ namespace Dominio.Entidades.Citas;
 
 public class Cita : EntidadBase
 {
-    public int PacienteId { get; set; }
-    public int DoctorId { get; set; }
+    // Llaves foráneas primero
+    public int IdPaciente { get; set; }
+
+    public int IdDoctor { get; set; }
+
+// Propiedades propias
     public DateTime FechaHora { get; set; }
     public string Motivo { get; set; } = string.Empty;
     public EstadoCita Estado { get; set; } = EstadoCita.Pendiente;
+
     public string Notas { get; set; } = string.Empty;
+
+// Propiedades de navegación
     public virtual Paciente Paciente { get; set; } = null!;
+
     public virtual Doctor Doctor { get; set; } = null!;
 
+// Métodos de negocio
     public void Confirmar()
     {
         Estado = EstadoCita.Confirmada;
