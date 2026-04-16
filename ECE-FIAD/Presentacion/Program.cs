@@ -4,6 +4,8 @@ using Infraestructura.Data;
 using Infraestructura.Repositorios;
 using Microsoft.EntityFrameworkCore;
 using Presentacion.Components;
+using Presentacion.Servicios;
+using CurrieTechnologies.Razor.SweetAlert2;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,6 +19,10 @@ builder.Services.AddDbContext<ContextoECE>(options =>
 // Registra UnitOfWork
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AgregarAplicacion();
+
+//Toastr
+builder.Services.AddScoped<IToastrService, ToastrService>();
+builder.Services.AddSweetAlert2();
 
 var app = builder.Build();
 

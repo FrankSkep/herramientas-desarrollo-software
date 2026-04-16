@@ -13,7 +13,7 @@ a, .btn-link {
 }
 
 .btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
 }
 
 .content {
@@ -42,9 +42,9 @@ h1:focus {
     color: white;
 }
 
-    .blazor-error-boundary::after {
-        content: "An error has occurred."
-    }
+.blazor-error-boundary::after {
+    content: "An error has occurred."
+}
 
 .darker-border-checkbox.form-check-input {
     border-color: #929292;
@@ -57,4 +57,69 @@ h1:focus {
 
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
     text-align: start;
+}
+
+/* Variables globales */
+:root {
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --card-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
+    --border-radius: 1rem;
+}
+
+body {
+    background: #f3f4f6;
+    font-family: 'Inter', 'Segoe UI', system-ui;
+}
+
+/* Cards modernos */
+.card-stats, .card-modern, .card-paciente {
+    background: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--card-shadow);
+    padding: 1.5rem;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card-stats:hover, .card-modern:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 25px -12px rgba(0, 0, 0, 0.1);
+}
+
+.card-stats i {
+    font-size: 2.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.icon-primary {
+    color: #667eea;
+}
+
+.icon-success {
+    color: #10b981;
+}
+
+.icon-info {
+    color: #3b82f6;
+}
+
+.icon-warning {
+    color: #f59e0b;
+}
+
+/* Tabla moderna */
+.table-modern {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.table-modern th {
+    background: #f9fafb;
+    font-weight: 600;
+    padding: 1rem;
+}
+
+.table-modern td {
+    padding: 1rem;
+    border-top: 1px solid #e5e7eb;
 }
