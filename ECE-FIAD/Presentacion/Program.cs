@@ -1,3 +1,8 @@
+using Aplicacion.Abstracciones;
+using Aplicacion.Inyecciones;
+using Infraestructura.Data;
+using Infraestructura.Repositorios;
+using Microsoft.EntityFrameworkCore;
 using Presentacion.Components;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -5,6 +10,13 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+// Registrar DbContext
+builder.Services.AddDbContext<ContextoECE>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("ConexionBD")));
+// Registra UnitOfWork
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+builder.Services.AgregarAplicacion();
 
 var app = builder.Build();
 

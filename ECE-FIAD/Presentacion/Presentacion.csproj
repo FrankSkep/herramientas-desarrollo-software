@@ -9,6 +9,15 @@
     <ItemGroup>
       <ProjectReference Include="..\Aplicacion\Aplicacion.csproj" />
       <ProjectReference Include="..\Dominio\Dominio.csproj" />
+      <ProjectReference Include="..\Infraestructura\Infraestructura.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.2">
+        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        <PrivateAssets>all</PrivateAssets>
+      </PackageReference>
+      <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.2" />
     </ItemGroup>
 
 </Project>

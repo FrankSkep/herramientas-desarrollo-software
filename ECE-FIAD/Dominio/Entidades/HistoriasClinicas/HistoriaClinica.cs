@@ -5,6 +5,7 @@ namespace Dominio.Entidades.HistoriasClinicas;
 
 public class HistoriaClinica
 {
+    public int Id { get; set; }
     public int IdPaciente { get; set; }
     public DateTime FechaApertura { get; set; } = DateTime.UtcNow;
     public string Alergias { get; set; } = string.Empty;

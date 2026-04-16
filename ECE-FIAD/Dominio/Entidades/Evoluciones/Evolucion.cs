@@ -5,6 +5,7 @@ namespace Dominio.Entidades.Evoluciones;
 
 public class Evolucion
 {
+    public int Id { get; set; }
     public int IdHistoriaClinica { get; set; }
     public int IdDoctor { get; set; }
     public DateTime Fecha { get; set; } = DateTime.UtcNow;
