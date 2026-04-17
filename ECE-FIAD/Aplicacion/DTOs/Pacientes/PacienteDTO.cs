@@ -14,5 +14,6 @@ public class PacienteDTO
     public DateTime FechaNacimiento { get; set; }
     public Genero Genero { get; set; }
     public GrupoSanguineo GrupoSanguineo { get; set; }
+    public string? Direccion { get; set; } = string.Empty;
     public bool Activo { get; set; }
 }

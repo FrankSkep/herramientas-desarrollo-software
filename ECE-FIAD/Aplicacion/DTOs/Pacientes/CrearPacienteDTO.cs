@@ -10,7 +10,7 @@ public class CrearPacienteDTO
     public TipoDeDocumento TipoDocumento { get; set; }
     public string? Telefono { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
-    public DateTime FechaDeNacimiento { get; set; }
+    public DateTime FechaNacimiento { get; set; }
     public Genero Genero { get; set; }
     public GrupoSanguineo GrupoSanguineo { get; set; }
     public string? Direccion { get; set; } = string.Empty;

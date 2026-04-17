@@ -16,7 +16,7 @@ public class CrearPacienteValidator : AbstractValidator<CrearPacienteDTO>
         RuleFor(p => p.NumeroDocumento)
             .NotEmpty().WithMessage("El número de identificación es obligatorio")
             .MaximumLength(20);
-        RuleFor(p => p.FechaDeNacimiento)
+        RuleFor(p => p.FechaNacimiento)
             .LessThan(DateTime.Today).WithMessage("La fecha de nacimiento debe ser anterior a hoy")
             .Must(fecha => fecha > DateTime.Today.AddYears(-120))
             .WithMessage("Edad no válida (máximo 120 años)");
