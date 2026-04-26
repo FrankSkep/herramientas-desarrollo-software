@@ -16,6 +16,7 @@ public static class InyeccionDependencias
         services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
         // Servicios
         services.AddScoped<IPacienteService, PacienteService>();
+        services.AddScoped<IEspecialidadService, EspecialidadService>();
         return services;
     }
 }

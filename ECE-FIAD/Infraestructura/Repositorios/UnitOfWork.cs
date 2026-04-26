@@ -7,6 +7,7 @@ public class UnitOfWork : IUnitOfWork
 {
     private readonly ContextoECE _contexto;
     private IPacienteRepositorio? _pacienteRepositorio;
+    private IEspecialidadRepositorio? _especialidadRepositorio;
 
     public UnitOfWork(ContextoECE contexto)
     {
@@ -14,6 +15,7 @@ public class UnitOfWork : IUnitOfWork
     }
 
     public IPacienteRepositorio Pacientes => _pacienteRepositorio ??= new PacienteRepositorio(_contexto);
+    public IEspecialidadRepositorio Especialidades => _especialidadRepositorio ??= new EspecialidadRepositorio(_contexto);
 
     public async Task<int> GuardarCambiosAsync()
     {
