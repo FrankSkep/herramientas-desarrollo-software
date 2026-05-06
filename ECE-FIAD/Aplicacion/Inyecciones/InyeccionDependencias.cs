@@ -18,6 +18,7 @@ public static class InyeccionDependencias
         services.AddScoped<IPacienteService, PacienteService>();
         services.AddScoped<IEspecialidadService, EspecialidadService>();
         services.AddScoped<IDoctorServicio, DoctorServicio>();
+        services.AddScoped<ICitaService, CitaService>();
         return services;
     }
 }

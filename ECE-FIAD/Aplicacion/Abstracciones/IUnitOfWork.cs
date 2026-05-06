@@ -5,5 +5,6 @@ public interface IUnitOfWork : IDisposable
     IPacienteRepositorio Pacientes { get; }
     IEspecialidadRepositorio Especialidades { get; }
     IDoctorRepositorio Doctores { get; }
+    ICitaRepositorio Citas { get; }
     Task<int> GuardarCambiosAsync();
 }

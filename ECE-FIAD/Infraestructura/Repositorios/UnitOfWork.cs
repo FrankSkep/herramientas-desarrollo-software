@@ -9,6 +9,7 @@ public class UnitOfWork : IUnitOfWork
     private IPacienteRepositorio? _pacienteRepositorio;
     private IEspecialidadRepositorio? _especialidadRepositorio;
     private IDoctorRepositorio? _doctorRepositorio;
+    private ICitaRepositorio? _citaRepositorio;
 
     public UnitOfWork(ContextoECE contexto)
     {
@@ -18,6 +19,7 @@ public class UnitOfWork : IUnitOfWork
     public IPacienteRepositorio Pacientes => _pacienteRepositorio ??= new PacienteRepositorio(_contexto);
     public IEspecialidadRepositorio Especialidades => _especialidadRepositorio ??= new EspecialidadRepositorio(_contexto);
     public IDoctorRepositorio Doctores => _doctorRepositorio ??= new DoctorRepositorio(_contexto);
+    public ICitaRepositorio Citas => _citaRepositorio ??= new CitaRepositorio(_contexto);
 
     public async Task<int> GuardarCambiosAsync()
     {
