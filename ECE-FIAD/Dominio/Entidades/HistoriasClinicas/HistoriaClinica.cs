@@ -1,11 +1,11 @@
+using Dominio.Entidades.Base;
 using Dominio.Entidades.Evoluciones;
 using Dominio.Entidades.Pacientes;
 
 namespace Dominio.Entidades.HistoriasClinicas;
 
-public class HistoriaClinica
+public class HistoriaClinica : EntidadBase
 {
-    public int Id { get; set; }
     public int IdPaciente { get; set; }
     public DateTime FechaApertura { get; set; } = DateTime.UtcNow;
     public string Alergias { get; set; } = string.Empty;

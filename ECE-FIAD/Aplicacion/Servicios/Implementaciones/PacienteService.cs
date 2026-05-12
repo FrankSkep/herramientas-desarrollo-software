@@ -41,6 +41,13 @@ public class PacienteService : IPacienteService
         return ResultadoAccion<IEnumerable<PacienteDTO>>.Exito(dtos);
     }
 
+    public async Task<ResultadoAccion<IEnumerable<PacienteDTO>>> ObtenerActivosSinHistoriaAsync()
+    {
+        var pacientes = await _unitOfWork.Pacientes.ObtenerActivosSinHistoriaAsync();
+        var dtos = _mapper.Map<IEnumerable<PacienteDTO>>(pacientes);
+        return ResultadoAccion<IEnumerable<PacienteDTO>>.Exito(dtos);
+    }
+
     public async Task<ResultadoAccion<PacienteDTO>> CrearAsync(CrearPacienteDTO dto)
     {
 // Validar

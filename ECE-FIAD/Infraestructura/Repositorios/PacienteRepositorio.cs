@@ -36,4 +36,13 @@ public class PacienteRepositorio : RepositorioGenerico<Paciente>, IPacienteRepos
             .Take(tamanioPagina)
             .ToListAsync();
     }
+
+    public async Task<IEnumerable<Paciente>> ObtenerActivosSinHistoriaAsync()
+    {
+        return await _dbSet
+            .Include(p => p.HistoriaClinica)
+            .Where(p => p.Activo && !p.Eliminado &&
+                        (p.HistoriaClinica == null || p.HistoriaClinica.Eliminado || !p.HistoriaClinica.Activo))
+            .ToListAsync();
+    }
 }

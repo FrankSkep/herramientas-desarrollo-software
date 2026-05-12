@@ -57,6 +57,8 @@ public class CitaService : ICitaService
             return ResultadoAccion<CitaDTO>.Falla("El doctor ya tiene una cita en ese horario.");
 
         var cita = _mapper.Map<Cita>(dto);
+        if (string.IsNullOrWhiteSpace(cita.Notas))
+            cita.Notas = string.Empty;
         if (dto.Estado == EstadoCita.Cancelada)
             cita.FechaDeEliminacion = DateTime.UtcNow;
 
@@ -86,7 +88,12 @@ public class CitaService : ICitaService
             return ResultadoAccion<CitaDTO>.Falla("El doctor ya tiene una cita en ese horario.");
 
         var estadoAnterior = cita.Estado;
+        var notasActuales = cita.Notas;
         _mapper.Map(dto, cita);
+        if (dto.Notas == null)
+            cita.Notas = notasActuales;
+        else if (string.IsNullOrWhiteSpace(cita.Notas))
+            cita.Notas = string.Empty;
         cita.FechaDeModificacion = DateTime.UtcNow;
 
         if (estadoAnterior != EstadoCita.Cancelada && dto.Estado == EstadoCita.Cancelada)
@@ -120,4 +127,3 @@ public class CitaService : ICitaService
         return !existe;
     }
 }
-
