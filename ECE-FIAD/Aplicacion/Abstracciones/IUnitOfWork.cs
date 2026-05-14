@@ -7,5 +7,6 @@ public interface IUnitOfWork : IDisposable
     IDoctorRepositorio Doctores { get; }
     ICitaRepositorio Citas { get; }
     IHistoriaClinicaRepositorio HistoriasClinicas { get; }
+    IEvolucionRepositorio Evoluciones { get; }
     Task<int> GuardarCambiosAsync();
 }

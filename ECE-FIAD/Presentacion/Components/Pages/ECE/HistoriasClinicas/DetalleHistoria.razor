@@ -94,6 +94,9 @@
                             <button type="button" class="btn btn-secondary px-4" @onclick="VolverAlListado">
                                 <i class="fas fa-arrow-left me-1"></i> Volver al listado
                             </button>
+                            <button type="button" class="btn btn-info px-4" @onclick="() => VerEvoluciones(Historia.Id)">
+                                <i class="fas fa-chart-line me-1"></i> Ver evoluciones
+                            </button>
                             <button type="button" class="btn btn-primary px-4" @onclick="() => EditarHistoria(Historia.Id)">
                                 <i class="fas fa-edit me-1"></i> Editar historia
                             </button>

@@ -42,6 +42,13 @@ public class HistoriaClinicaService : IHistoriaClinicaService
         return ResultadoAccion<IEnumerable<HistoriaClinicaDTO>>.Exito(dtos);
     }
 
+    public async Task<ResultadoAccion<IEnumerable<HistoriaClinicaDTO>>> ObtenerActivasAsync()
+    {
+        var historias = await _unitOfWork.HistoriasClinicas.ObtenerActivasConPacienteAsync();
+        var dtos = _mapper.Map<IEnumerable<HistoriaClinicaDTO>>(historias);
+        return ResultadoAccion<IEnumerable<HistoriaClinicaDTO>>.Exito(dtos);
+    }
+
     public async Task<ResultadoAccion<HistoriaClinicaDTO>> CrearAsync(CrearHistoriaDTO dto)
     {
         var validacion = await _crearValidator.ValidateAsync(dto);
@@ -116,4 +123,3 @@ public class HistoriaClinicaService : IHistoriaClinicaService
         return await _unitOfWork.HistoriasClinicas.ExisteHistoriaActivaAsync(idPaciente, idHistoria);
     }
 }
-

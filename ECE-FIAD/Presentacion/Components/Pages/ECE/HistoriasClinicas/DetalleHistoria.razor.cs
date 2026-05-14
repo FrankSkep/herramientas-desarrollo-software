@@ -41,6 +41,11 @@ public partial class DetalleHistoria
         NavigationManager.NavigateTo($"/editar-historia/{historiaId}");
     }
 
+    private void VerEvoluciones(int historiaId)
+    {
+        NavigationManager.NavigateTo($"/evoluciones/{historiaId}");
+    }
+
     private string MostrarTexto(string? texto)
     {
         return string.IsNullOrWhiteSpace(texto) ? "—" : texto;

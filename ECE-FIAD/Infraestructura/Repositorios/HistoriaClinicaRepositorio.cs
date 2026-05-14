@@ -26,6 +26,14 @@ public class HistoriaClinicaRepositorio : RepositorioGenerico<HistoriaClinica>, 
             .ToListAsync();
     }
 
+    public async Task<IEnumerable<HistoriaClinica>> ObtenerActivasConPacienteAsync()
+    {
+        return await _dbSet
+            .Include(h => h.Paciente)
+            .Where(h => h.Activo && !h.Eliminado)
+            .ToListAsync();
+    }
+
     public async Task<bool> ExisteHistoriaActivaAsync(int idPaciente, int? idHistoria = null)
     {
         var query = _dbSet.Where(h => h.IdPaciente == idPaciente && h.Activo && !h.Eliminado);
@@ -34,4 +42,3 @@ public class HistoriaClinicaRepositorio : RepositorioGenerico<HistoriaClinica>, 
         return await query.AnyAsync();
     }
 }
-

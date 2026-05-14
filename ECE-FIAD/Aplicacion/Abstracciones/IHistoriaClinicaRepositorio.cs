@@ -6,6 +6,6 @@ public interface IHistoriaClinicaRepositorio : IRepositorioGenerico<HistoriaClin
 {
     Task<HistoriaClinica?> ObtenerConPacienteAsync(int id);
     Task<IEnumerable<HistoriaClinica>> ObtenerTodosConPacienteAsync();
+    Task<IEnumerable<HistoriaClinica>> ObtenerActivasConPacienteAsync();
     Task<bool> ExisteHistoriaActivaAsync(int idPaciente, int? idHistoria = null);
 }
-
