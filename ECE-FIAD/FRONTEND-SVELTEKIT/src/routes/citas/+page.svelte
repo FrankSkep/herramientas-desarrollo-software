@@ -16,9 +16,11 @@
 	let loading = $state(true);
 	let editing = $state(false);
 	let submitting = $state(false);
+	let formVisible = $state(false);
 	let fieldErrors: Record<string, string> = $state({});
 	let searchQuery = $state('');
 	let filtroEstado = $state('');
+	let filtroFecha = $state('');
 	let confirmOpen = $state(false);
 	let confirmLoading = $state(false);
 	let pendingDeleteId = $state<number | null>(null);
@@ -31,7 +33,7 @@
 	const resetForm = () => {
 		form = { Id: 0, IdPaciente: pacientes[0]?.Id ?? 0, IdDoctor: doctores[0]?.Id ?? 0,
 			FechaHora: toDateTimeLocalValue(new Date()), Motivo: '', Notas: '', Estado: 1 };
-		editing = false; fieldErrors = {};
+		editing = false; fieldErrors = {}; formVisible = false;
 	};
 
 	const loadData = async () => {
@@ -46,7 +48,7 @@
 	};
 
 	const editarCita = (cita: CitaDTO) => {
-		editing = true; fieldErrors = {};
+		editing = true; fieldErrors = {}; formVisible = true;
 		form = { Id: cita.Id, IdPaciente: cita.IdPaciente, IdDoctor: cita.IdDoctor,
 			FechaHora: toDateTimeLocalValue(cita.FechaHora), Motivo: cita.Motivo,
 			Notas: cita.Notas ?? '', Estado: cita.Estado };
@@ -109,7 +111,8 @@
 			const q = searchQuery.toLowerCase();
 			const matchSearch = !searchQuery || c.NombrePaciente.toLowerCase().includes(q) || c.NombreDoctor.toLowerCase().includes(q) || c.Motivo.toLowerCase().includes(q);
 			const matchEstado = !filtroEstado || String(c.Estado) === filtroEstado;
-			return matchSearch && matchEstado;
+			const matchFecha = !filtroFecha || c.FechaHora.startsWith(filtroFecha);
+			return matchSearch && matchEstado && matchFecha;
 		})
 	);
 
@@ -144,8 +147,12 @@
 			<p class="page-subtitle">Agenda y programación de consultas</p>
 		</div>
 	</div>
+	<button class="btn btn-primary" onclick={() => { resetForm(); formVisible = true; }}>
+		+ Nueva cita
+	</button>
 </div>
 
+{#if formVisible}
 <div class="form-section">
 	<div class="form-section__header">
 		<span class="form-section__title">{editing ? '✏️ Editar cita' : '📅 Agendar nueva cita'}</span>
@@ -199,11 +206,10 @@
 			{#if submitting}<span class="spinner"></span>{/if}
 			{submitting ? 'Guardando...' : editing ? 'Guardar cambios' : 'Agendar cita'}
 		</button>
-		{#if editing}
-			<button class="btn btn-secondary" onclick={resetForm} disabled={submitting}>Cancelar edición</button>
-		{/if}
+		<button class="btn btn-secondary" onclick={resetForm} disabled={submitting}>Cancelar</button>
 	</div>
 </div>
+{/if}
 
 <div class="card">
 	<div class="section-header">
@@ -218,6 +224,7 @@
 					<option value={String(opt.value)}>{opt.label}</option>
 				{/each}
 			</select>
+			<input type="date" class="filter-select" bind:value={filtroFecha} style="padding: 0.5rem; border: 1px solid #e2e8f0; border-radius: 0.375rem;" />
 			<div class="search-box">
 				<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
 				<input class="search-input" bind:value={searchQuery} placeholder="Buscar cita..." />
@@ -252,7 +259,7 @@
 						</td></tr>
 					{:else}
 						{#each filtered as cita}
-							<tr>
+							<tr onclick={() => editarCita(cita)} style="cursor: pointer;" class="clickable-row">
 								<td>
 									<div style="font-weight:600;color:#0f172a;font-size:0.875rem;">{cita.NombrePaciente}</div>
 								</td>
@@ -271,11 +278,11 @@
 								<td><span class={estadoBadgeClass(cita.Estado)}>{findLabel(estadoCitaOptions, cita.Estado)}</span></td>
 								<td>
 									<div class="table-actions">
-										<button class="btn btn-sm btn-secondary" onclick={() => editarCita(cita)}>
+										<button class="btn btn-sm btn-secondary">
 											<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
 											Editar
 										</button>
-										<button class="btn btn-sm btn-danger" onclick={() => solicitarEliminar(cita.Id)}>
+										<button class="btn btn-sm btn-danger" aria-label="Eliminar" title="Eliminar" onclick={(e) => { e.stopPropagation(); solicitarEliminar(cita.Id); }}>
 											<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
 										</button>
 									</div>
@@ -301,4 +308,5 @@
 	.filter-select { border:1.5px solid #e2e8f0; border-radius:0.6rem; padding:0.45rem 0.75rem; font-size:0.875rem; background:#f8fafc; outline:none; cursor:pointer; }
 	.fecha-cell { display:flex; align-items:center; gap:0.4rem; font-size:0.875rem; color:#334155; white-space:nowrap; }
 	.truncate { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+	.clickable-row:hover { background-color: #f1f5f9; }
 </style>

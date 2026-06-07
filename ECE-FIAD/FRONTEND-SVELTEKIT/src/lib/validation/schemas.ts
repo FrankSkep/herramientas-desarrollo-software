@@ -115,7 +115,7 @@ export const crearCitaSchema = z.object({
 	IdPaciente: positiveId('Debe seleccionar un paciente valido.'),
 	IdDoctor: positiveId('Debe seleccionar un doctor valido.'),
 	FechaHora: dateFuture('La fecha y hora deben ser futuras.'),
-	Motivo: z.string().min(1, { message: 'El motivo es obligatorio.' }).max(500, {
+	Motivo: z.string().min(5, { message: 'El motivo es obligatorio (mínimo 5 caracteres).' }).max(500, {
 		message: 'El motivo no puede superar 500 caracteres.'
 	}),
 	Notas: z.string().max(1000, { message: 'Las notas no pueden superar 1000 caracteres.' }).optional().or(z.literal('')),
